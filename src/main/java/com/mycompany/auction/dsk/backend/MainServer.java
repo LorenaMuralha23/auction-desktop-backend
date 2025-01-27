@@ -15,57 +15,70 @@ import java.util.logging.Logger;
 public class MainServer implements Runnable {
 
     private ServerSocket serverSocket;
-    
 
-    public void startServer() {
+    public void startServer() throws InterruptedException {
         try {
             ServerSocket serverSocket = new ServerSocket(5000);
 
             while (true) {
-                System.out.println("Esperando Conexão...");
+//                System.out.println("Esperando Conexão...");;
                 Socket clientSocket = serverSocket.accept();
-                System.out.println("Cliente conectado!");
+//                System.out.println("Cliente conectado!");
 
-                // Cria fluxo de entrada para receber mensagens
-                BufferedReader in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
-
-                String mensagem;
-                while ((mensagem = in.readLine()) != null) {
-                    System.out.println("Mensagem recebida: " + mensagem);
-
-                    // Converte a mensagem JSON em um objeto Java (supondo que seja um JSON com chave "nome" e "idade")
-                    ObjectMapper objectMapper = new ObjectMapper();
-                    PrintWriter out = new PrintWriter(clientSocket.getOutputStream(), true);
-                    JsonNode jsonNode = objectMapper.readTree(mensagem);
-                    
-                    String response = mapOperation(jsonNode.get("operation").asText());
-                    
-                    out.println(response);
-                }
+                new Thread(() -> processClient(clientSocket)).start();
             }
 
         } catch (IOException ex) {
+            System.out.println("Deu algum erro...");
             Logger.getLogger(MainServer.class.getName()).log(Level.SEVERE, null, ex);
+        }
+    }
+
+    private void processClient(Socket clientSocket) {
+        try (
+                 BufferedReader in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));  PrintWriter out = new PrintWriter(clientSocket.getOutputStream(), true)) {
+            String mensagem;
+            while ((mensagem = in.readLine()) != null) {
+//                System.out.println("Mensagem recebida: " + mensagem);
+
+                ObjectMapper objectMapper = new ObjectMapper();
+                JsonNode jsonNode = objectMapper.readTree(mensagem);
+
+                String response = mapOperation(jsonNode.get("operation").asText(), jsonNode);
+
+                out.println(response);
+                Main.auctionController.verifyIfCanStart();
+//                System.out.println("Mensagem enviada!");
+            }
+        } catch (IOException | InterruptedException e) {
+            e.printStackTrace();
         }
     }
 
     @Override
     public void run() {
-        startServer();
+        try {
+            startServer();
+        } catch (InterruptedException ex) {
+            Logger.getLogger(MainServer.class.getName()).log(Level.SEVERE, null, ex);
+        }
     }
-    
-    public String mapOperation(String operation){
+
+    public String mapOperation(String operation, JsonNode message) throws IOException, InterruptedException {
         String response = "";
         switch (operation) {
             case "LOGIN":
-                response = createResponseJson();
+                if (Main.auctionController.addClientIntoTheRoom(message.get("cpf").asText())) {
+//                    System.out.println("Cliente adicionado!");
+                    response = createResponseJson();
+                }
                 break;
         }
-        
+
         return response;
     }
-    
-    public String createResponseJson(){
+
+    public String createResponseJson() {
         try {
             ObjectMapper objectMapper = new ObjectMapper();
             JsonNode responseNode = objectMapper.createObjectNode();
@@ -80,8 +93,8 @@ public class MainServer implements Runnable {
 
         } catch (Exception e) {
             e.printStackTrace();
-            return "{}"; 
+            return "{}";
         }
     }
-    
+
 }

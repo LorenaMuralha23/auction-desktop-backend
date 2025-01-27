@@ -1,10 +1,13 @@
 package com.mycompany.auction.dsk.backend.multicast;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.mycompany.auction.dsk.backend.Main;
 import java.io.IOException;
+import java.net.DatagramPacket;
 import java.net.InetAddress;
 import java.net.MulticastSocket;
 
-public class MulticastService {
+public class MulticastService implements Runnable {
 
     private MulticastSocket socket;
     private InetAddress group = null;
@@ -26,5 +29,45 @@ public class MulticastService {
     public int getPort() {
         return port;
     }
-    
+
+    public void sendMessageToGroup(String message) throws IOException {
+        DatagramPacket packet = new DatagramPacket(message.getBytes(), message.length(), group, port);
+
+        socket.send(packet);
+        System.out.println("Mensagem JSON enviada para o grupo multicast!");
+    }
+
+    public void listenForMessages() {
+        try {
+            byte[] buffer = new byte[256]; // Tamanho do buffer para armazenar pacotes recebidos
+            DatagramPacket packet = new DatagramPacket(buffer, buffer.length);
+
+            System.out.println("Listening for messages in the multicast group...");
+            socket.setSoTimeout(60000);
+
+            while (Main.auctionController.isAuctionStatus()) {
+                try {
+                    socket.receive(packet);
+
+                    if (packet.getLength() > 0) {
+                        String message = new String(packet.getData(), 0, packet.getLength());
+
+                        System.out.println("Mensagem recebida: " + message);
+                    }
+                } catch (java.net.SocketTimeoutException e) {
+                    System.out.println("Timeout de 1 minuto atingido, nenhuma mensagem recebida.");
+                }
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        System.out.println("Jogo finalizado!");
+        Main.auctionController.setAuctionStatus(false);
+    }
+
+    @Override
+    public void run() {
+        listenForMessages();
+    }
 }
