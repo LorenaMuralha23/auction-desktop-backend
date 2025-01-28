@@ -1,7 +1,13 @@
 package com.mycompany.auction.dsk.backend.services;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.mycompany.auction.dsk.backend.Main;
+import com.mycompany.auction.dsk.backend.entities.Auction;
+import com.mycompany.auction.dsk.backend.entities.Product;
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.logging.Level;
@@ -11,8 +17,12 @@ public class AuctionController {
 
     private Set<String> clientsInTheRoom = new HashSet<>();
     private boolean auctionStatus = false;
+    
+    private String winner;
+    private int currentPrice;
 
     private final AuctionService auctionService = new AuctionService();
+    private Auction currentAuction = new Auction();
 
     public boolean addClientIntoTheRoom(String clientToJoin) {
         if (!clientsInTheRoom.contains(clientToJoin)) {
@@ -28,7 +38,7 @@ public class AuctionController {
     }
 
     public void verifyIfCanStart() throws IOException, InterruptedException {
-        if (clientsInTheRoom.size() >= 3 && !auctionStatus) {
+        if (clientsInTheRoom.size() >= 2 && !auctionStatus) {
             System.out.println("Vou iniciar...");
             startGame();
         }
@@ -43,6 +53,23 @@ public class AuctionController {
             multicastGroup.start();
         }
     }
+    
+    public void updateInfoGame(JsonNode jsonNode) throws IOException{
+        ObjectMapper objectMapper = new ObjectMapper();
+        ObjectNode jsonToSend = objectMapper.createObjectNode();
+        
+        currentPrice += jsonNode.get("bid").asInt();
+        winner = jsonNode.get("username").asText();
+        
+        jsonToSend.put("username", "server");
+        jsonToSend.put("operation", "UPDATE WINNER");
+        jsonToSend.put("current-price", currentPrice);
+        jsonToSend.put("current-winner", winner);
+        
+        updateAuction(winner, currentPrice);
+        
+        Main.multicastService.sendMessageToGroup(jsonToSend.toString());
+    }
 
     public boolean isAuctionStatus() {
         return auctionStatus;
@@ -52,4 +79,13 @@ public class AuctionController {
         this.auctionStatus = auctionStatus;
     }
 
+    public Auction getCurrentAuction() {
+        return currentAuction;
+    }
+    
+    public void updateAuction(String currentWinner, int currentPrice){
+        this.currentAuction.setCurrentWinner(currentWinner);
+        this.currentAuction.setCurrentPrice(currentPrice);
+    }
+    
 }

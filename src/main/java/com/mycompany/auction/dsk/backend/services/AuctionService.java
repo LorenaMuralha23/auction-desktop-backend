@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.mycompany.auction.dsk.backend.Main;
 import com.mycompany.auction.dsk.backend.entities.Product;
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.Random;
@@ -19,7 +20,7 @@ public class AuctionService {
 
     private LocalDateTime timeToStart;
     private LocalDateTime timeToEnd;
-
+    
     public AuctionService() {
         initiateProducts();
     }
@@ -62,17 +63,23 @@ public class AuctionService {
         this.timeToEnd = this.timeToStart.plusMinutes(5);
 
         // Adiciona informações ao JSON
+        jsonNode.put("username", "server");
+        jsonNode.put("operation", "SET INFO");
         jsonNode.put("product", productToAuction.getName());
-        jsonNode.put("startPrice", productToAuction.getStartValue());
+        jsonNode.put("start_price", productToAuction.getStartValue());
         jsonNode.put("minimumBid", productToAuction.getMinimumBid());
+        jsonNode.put("current-price", productToAuction.getStartValue());
+        jsonNode.put("current-winner", "/");
         jsonNode.put("timeToStart", this.timeToStart.toString());
         jsonNode.put("timeToEnd", this.timeToEnd.toString());
+        
+        Main.auctionController.getCurrentAuction().setCurrentProduct(productToAuction);
 
-        // Envia as informações
         System.out.println("Sending info to client...");
         System.out.println(jsonNode.toString()); // Corrigido para exibir a string JSON completa
         Main.multicastService.sendMessageToGroup(jsonNode.toString());
         
     }
 
+    
 }

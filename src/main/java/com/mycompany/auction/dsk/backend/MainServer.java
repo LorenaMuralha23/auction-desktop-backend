@@ -21,9 +21,7 @@ public class MainServer implements Runnable {
             ServerSocket serverSocket = new ServerSocket(5000);
 
             while (true) {
-//                System.out.println("Esperando Conexão...");;
                 Socket clientSocket = serverSocket.accept();
-//                System.out.println("Cliente conectado!");
 
                 new Thread(() -> processClient(clientSocket)).start();
             }
@@ -39,7 +37,6 @@ public class MainServer implements Runnable {
                  BufferedReader in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));  PrintWriter out = new PrintWriter(clientSocket.getOutputStream(), true)) {
             String mensagem;
             while ((mensagem = in.readLine()) != null) {
-//                System.out.println("Mensagem recebida: " + mensagem);
 
                 ObjectMapper objectMapper = new ObjectMapper();
                 JsonNode jsonNode = objectMapper.readTree(mensagem);
@@ -48,7 +45,6 @@ public class MainServer implements Runnable {
 
                 out.println(response);
                 Main.auctionController.verifyIfCanStart();
-//                System.out.println("Mensagem enviada!");
             }
         } catch (IOException | InterruptedException e) {
             e.printStackTrace();
@@ -68,8 +64,7 @@ public class MainServer implements Runnable {
         String response = "";
         switch (operation) {
             case "LOGIN":
-                if (Main.auctionController.addClientIntoTheRoom(message.get("cpf").asText())) {
-//                    System.out.println("Cliente adicionado!");
+                if (Main.auctionController.addClientIntoTheRoom(message.get("username").asText())) {
                     response = createResponseJson();
                 }
                 break;
@@ -87,6 +82,15 @@ public class MainServer implements Runnable {
             ((ObjectNode) responseNode).put("group_address", Main.multicastService.getMulticastGroup());
             ((ObjectNode) responseNode).put("group_port", Main.multicastService.getPort());
             ((ObjectNode) responseNode).put("login_status", "SUCCESS");
+            ((ObjectNode) responseNode).put("auction_status", Main.auctionController.isAuctionStatus());
+            
+            if (Main.auctionController.isAuctionStatus()) {// se o jogo já estiver iniciado
+                ((ObjectNode) responseNode).put("product", Main.auctionController.getCurrentAuction().getCurrentProduct().getName());
+                ((ObjectNode) responseNode).put("start_price", Main.auctionController.getCurrentAuction().getCurrentPrice());
+                ((ObjectNode) responseNode).put("minimumBid", Main.auctionController.getCurrentAuction().getCurrentProduct().getMinimumBid());
+                ((ObjectNode) responseNode).put("current-price", Main.auctionController.getCurrentAuction().getCurrentPrice());
+                ((ObjectNode) responseNode).put("current-winner", Main.auctionController.getCurrentAuction().getCurrentWinner());
+            }
 
             // Retorna a string JSON
             return objectMapper.writeValueAsString(responseNode);
