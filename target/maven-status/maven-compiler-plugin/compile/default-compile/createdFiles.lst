@@ -1,0 +1,8 @@
+com\mycompany\auction\dsk\backend\entities\Auction.class
+com\mycompany\auction\dsk\backend\services\AuctionController.class
+com\mycompany\auction\dsk\backend\services\TimeController.class
+com\mycompany\auction\dsk\backend\MainServer.class
+com\mycompany\auction\dsk\backend\entities\Product.class
+com\mycompany\auction\dsk\backend\Main.class
+com\mycompany\auction\dsk\backend\multicast\MulticastService.class
+com\mycompany\auction\dsk\backend\services\AuctionService.class

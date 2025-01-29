@@ -46,37 +46,32 @@ public class MulticastService implements Runnable {
             DatagramPacket packet = new DatagramPacket(buffer, buffer.length);
 
             System.out.println("Listening for messages in the multicast group...");
-            socket.setSoTimeout(60000);
-
             while (Main.auctionController.isAuctionStatus()) {
-                try {
-                    socket.receive(packet);
 
-                    if (packet.getLength() > 0) {
-                        String message = new String(packet.getData(), 0, packet.getLength());
-                        JsonNode jsonNode = objectMapper.readTree(message);
+                socket.receive(packet);
 
-                        if (!jsonNode.get("username").asText().equals("server")) {
-                            //impede que o proprio usuário veja a propria mensagem
-                            System.out.println("Mensagem recebida: " + message);
+                if (packet.getLength() > 0) {
+                    String message = new String(packet.getData(), 0, packet.getLength());
+                    JsonNode jsonNode = objectMapper.readTree(message);
 
-                            if (jsonNode.get("operation").asText().equals("RAISE BID")) {
-                                Main.auctionController.updateInfoGame(jsonNode);
-                            }
+                    if (!jsonNode.get("username").asText().equals("server")) {
+                        //impede que o proprio usuário veja a propria mensagem
+                        System.out.println("Mensagem recebida: " + message);
 
+                        if (jsonNode.get("operation").asText().equals("RAISE BID")) {
+                            Main.auctionController.updateInfoGame(jsonNode);
                         }
 
                     }
-                } catch (java.net.SocketTimeoutException e) {
-                    System.out.println("Timeout de 1 minuto atingido, nenhuma mensagem recebida.");
+
                 }
+
             }
         } catch (IOException e) {
             e.printStackTrace();
         }
 
         System.out.println("Jogo finalizado!");
-        Main.auctionController.setAuctionStatus(false);
     }
 
     @Override
