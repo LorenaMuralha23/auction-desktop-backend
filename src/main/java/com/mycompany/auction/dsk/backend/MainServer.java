@@ -9,6 +9,7 @@ import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.time.LocalDateTime;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -77,19 +78,21 @@ public class MainServer implements Runnable {
         try {
             ObjectMapper objectMapper = new ObjectMapper();
             JsonNode responseNode = objectMapper.createObjectNode();
-
+            
             // Adiciona dados à resposta JSON
             ((ObjectNode) responseNode).put("group_address", Main.multicastService.getMulticastGroup());
             ((ObjectNode) responseNode).put("group_port", Main.multicastService.getPort());
             ((ObjectNode) responseNode).put("login_status", "SUCCESS");
             ((ObjectNode) responseNode).put("auction_status", Main.auctionController.isAuctionStatus());
             
-            if (Main.auctionController.isAuctionStatus()) {// se o jogo já estiver iniciado
+            if (Main.auctionController.isAuctionStatus()) {//estiver iniciado se o jogo já estiver iniciado
                 ((ObjectNode) responseNode).put("product", Main.auctionController.getCurrentAuction().getCurrentProduct().getName());
                 ((ObjectNode) responseNode).put("start_price", Main.auctionController.getCurrentAuction().getCurrentPrice());
                 ((ObjectNode) responseNode).put("minimumBid", Main.auctionController.getCurrentAuction().getCurrentProduct().getMinimumBid());
                 ((ObjectNode) responseNode).put("current-price", Main.auctionController.getCurrentAuction().getCurrentPrice());
                 ((ObjectNode) responseNode).put("current-winner", Main.auctionController.getCurrentAuction().getCurrentWinner());
+                ((ObjectNode) responseNode).put("timeToStart", Main.auctionController.getCurrentAuction().getTimeToStart().toString());
+                ((ObjectNode) responseNode).put("timeToEnd", Main.auctionController.getCurrentAuction().getTimeToEnd().toString());
             }
 
             // Retorna a string JSON
