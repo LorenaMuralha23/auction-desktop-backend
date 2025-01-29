@@ -66,7 +66,9 @@ public class MainServer implements Runnable {
         switch (operation) {
             case "LOGIN":
                 if (Main.auctionController.addClientIntoTheRoom(message.get("username").asText())) {
-                    response = createResponseJson();
+                    String defaultResponse = createResponseJson();
+                    response = Main.encryptService.encrypt(defaultResponse, message.get("cpf").asText());
+                    System.out.println("\nMensagem encriptada: " + response);
                 }
                 break;
         }
@@ -84,6 +86,7 @@ public class MainServer implements Runnable {
             ((ObjectNode) responseNode).put("group_port", Main.multicastService.getPort());
             ((ObjectNode) responseNode).put("login_status", "SUCCESS");
             ((ObjectNode) responseNode).put("auction_status", Main.auctionController.isAuctionStatus());
+            //adicionar a chave pública do servidor
             
             if (Main.auctionController.isAuctionStatus()) {//estiver iniciado se o jogo já estiver iniciado
                 ((ObjectNode) responseNode).put("product", Main.auctionController.getCurrentAuction().getCurrentProduct().getName());
