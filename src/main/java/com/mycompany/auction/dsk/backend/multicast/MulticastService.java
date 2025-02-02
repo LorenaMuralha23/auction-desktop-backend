@@ -8,6 +8,8 @@ import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.InetAddress;
 import java.net.MulticastSocket;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public class MulticastService implements Runnable {
 
@@ -22,6 +24,7 @@ public class MulticastService implements Runnable {
         socket.joinGroup(group);
 
         System.out.println("Multicast server started!");
+       
     }
 
     public String getMulticastGroup() {
@@ -32,32 +35,29 @@ public class MulticastService implements Runnable {
         return port;
     }
 
-    public void sendMessageToGroup(String message) throws IOException {
+    public void sendMessageToGroup(String message) throws IOException, InterruptedException {
         DatagramPacket packet = new DatagramPacket(message.getBytes(), message.length(), group, port);
 
         socket.send(packet);
         System.out.println("Mensagem JSON enviada para o grupo multicast!");
     }
 
-    public void listenForMessages() {
+    public void listenForMessages() throws InterruptedException {
         try {
             ObjectMapper objectMapper = new ObjectMapper();
-            byte[] buffer = new byte[256]; // Tamanho do buffer para armazenar pacotes recebidos
+            byte[] buffer = new byte[2048]; // Tamanho do buffer para armazenar pacotes recebidos
             DatagramPacket packet = new DatagramPacket(buffer, buffer.length);
 
             System.out.println("Listening for messages in the multicast group...");
-            while (Main.auctionController.isAuctionStatus()) {
+            while (true) {
 
                 socket.receive(packet);
 
-                if (packet.getLength() > 0) {
+                if (packet.getLength() > 0 && Main.auctionController.isAuctionStatus()) {
                     String message = new String(packet.getData(), 0, packet.getLength());
                     JsonNode jsonNode = objectMapper.readTree(message);
 
                     if (!jsonNode.get("username").asText().equals("server")) {
-                        //impede que o proprio usuário veja a propria mensagem
-                        System.out.println("Mensagem recebida: " + message);
-
                         if (jsonNode.get("operation").asText().equals("RAISE BID")) {
                             Main.auctionController.updateInfoGame(jsonNode);
                         }
@@ -76,6 +76,10 @@ public class MulticastService implements Runnable {
 
     @Override
     public void run() {
-        listenForMessages();
+        try {
+            listenForMessages();
+        } catch (InterruptedException ex) {
+            Logger.getLogger(MulticastService.class.getName()).log(Level.SEVERE, null, ex);
+        }
     }
 }

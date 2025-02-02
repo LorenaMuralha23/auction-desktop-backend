@@ -1,5 +1,6 @@
 package com.mycompany.auction.dsk.backend;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -45,7 +46,9 @@ public class MainServer implements Runnable {
                 String response = mapOperation(jsonNode.get("operation").asText(), jsonNode);
 
                 out.println(response);
+                
                 Main.auctionController.verifyIfCanStart();
+                
             }
         } catch (IOException | InterruptedException e) {
             e.printStackTrace();
@@ -66,9 +69,7 @@ public class MainServer implements Runnable {
         switch (operation) {
             case "LOGIN":
                 if (Main.auctionController.addClientIntoTheRoom(message.get("username").asText())) {
-                    String defaultResponse = createResponseJson();
-                    response = Main.encryptService.encrypt(defaultResponse, message.get("cpf").asText());
-                    System.out.println("\nMensagem encriptada: " + response);
+                    response = createResponseJson();
                 }
                 break;
         }
@@ -80,24 +81,17 @@ public class MainServer implements Runnable {
         try {
             ObjectMapper objectMapper = new ObjectMapper();
             JsonNode responseNode = objectMapper.createObjectNode();
-            
+
             // Adiciona dados à resposta JSON
             ((ObjectNode) responseNode).put("group_address", Main.multicastService.getMulticastGroup());
             ((ObjectNode) responseNode).put("group_port", Main.multicastService.getPort());
             ((ObjectNode) responseNode).put("login_status", "SUCCESS");
             ((ObjectNode) responseNode).put("auction_status", Main.auctionController.isAuctionStatus());
             //adicionar a chave pública do servidor
-            
-            if (Main.auctionController.isAuctionStatus()) {//estiver iniciado se o jogo já estiver iniciado
-                ((ObjectNode) responseNode).put("product", Main.auctionController.getCurrentAuction().getCurrentProduct().getName());
-                ((ObjectNode) responseNode).put("start_price", Main.auctionController.getCurrentAuction().getCurrentPrice());
-                ((ObjectNode) responseNode).put("minimumBid", Main.auctionController.getCurrentAuction().getCurrentProduct().getMinimumBid());
-                ((ObjectNode) responseNode).put("current-price", Main.auctionController.getCurrentAuction().getCurrentPrice());
-                ((ObjectNode) responseNode).put("current-winner", Main.auctionController.getCurrentAuction().getCurrentWinner());
-                ((ObjectNode) responseNode).put("timeToStart", Main.auctionController.getCurrentAuction().getTimeToStart().toString());
-                ((ObjectNode) responseNode).put("timeToEnd", Main.auctionController.getCurrentAuction().getTimeToEnd().toString());
-            }
 
+//            if (Main.auctionController.isAuctionStatus()) {//estiver iniciado se o jogo já estiver iniciado;
+//                
+//            }
             // Retorna a string JSON
             return objectMapper.writeValueAsString(responseNode);
 
@@ -106,5 +100,5 @@ public class MainServer implements Runnable {
             return "{}";
         }
     }
-
+    
 }

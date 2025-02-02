@@ -50,9 +50,8 @@ public class AuctionController {
 
     public void verifyIfCanStart() throws IOException, InterruptedException {
         if (clientsInTheRoom.size() >= 2 && !auctionStatus) {
-            System.out.println("Vou iniciar...");
             auctionStatus = true;
-            auctionService.definingInfoToAuction();
+            this.auctionService.defineTimeToStart();
             startGameAt(this.auctionService.getTimeToStart());
             endGameAt(this.auctionService.getTimeToEnd());
         }
@@ -95,9 +94,7 @@ public class AuctionController {
     }
 
     public void startGame() throws IOException, InterruptedException {
-        Thread.sleep(1000);
-        Thread multicastGroup = new Thread(Main.multicastService);
-        multicastGroup.start();
+        auctionService.definingInfoToAuction();
     }
 
     public void endGame() throws IOException, InterruptedException {
@@ -110,12 +107,12 @@ public class AuctionController {
         jsonNode.put("winner", this.currentAuction.getCurrentWinner());
 
         Main.multicastService.sendMessageToGroup(jsonNode.toString());
-        
+
         Thread.sleep(10000);
         verifyIfCanStart();
     }
 
-    public void updateInfoGame(JsonNode jsonNode) throws IOException {
+    public void updateInfoGame(JsonNode jsonNode) throws IOException, InterruptedException {
         ObjectMapper objectMapper = new ObjectMapper();
         ObjectNode jsonToSend = objectMapper.createObjectNode();
 

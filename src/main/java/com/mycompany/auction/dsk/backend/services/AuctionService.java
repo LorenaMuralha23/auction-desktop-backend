@@ -58,10 +58,6 @@ public class AuctionService {
         Product productToAuction = definingProductToAuction();
 
         // Define os tempos de início e fim
-        LocalDateTime now = LocalDateTime.now();
-        this.timeToStart = now.plusMinutes(1);
-        this.timeToEnd = this.timeToStart.plusMinutes(2);
-
         // Adiciona informações ao JSON
         jsonNode.put("username", "server");
         jsonNode.put("operation", "SET INFO");
@@ -70,17 +66,22 @@ public class AuctionService {
         jsonNode.put("minimumBid", productToAuction.getMinimumBid());
         jsonNode.put("current-price", productToAuction.getStartValue());
         jsonNode.put("current-winner", "/");
-        jsonNode.put("timeToStart", this.timeToStart.toString());
         jsonNode.put("timeToEnd", this.timeToEnd.toString());
         
         Main.auctionController.getCurrentAuction().setCurrentProduct(productToAuction);
-        Main.auctionController.getCurrentAuction().setTimeToStart(timeToStart);
-        Main.auctionController.getCurrentAuction().setTimeToEnd(timeToEnd);
+        
 
-        System.out.println("Sending info to client...");
         System.out.println(jsonNode.toString()); // Corrigido para exibir a string JSON completa
         Main.multicastService.sendMessageToGroup(jsonNode.toString());
         
+    }
+    
+    public void defineTimeToStart(){
+        LocalDateTime now = LocalDateTime.now();
+        this.timeToStart = now.plusMinutes(1);
+        this.timeToEnd = this.timeToStart.plusMinutes(2);
+        Main.auctionController.getCurrentAuction().setTimeToStart(timeToStart);
+        Main.auctionController.getCurrentAuction().setTimeToEnd(timeToEnd);
     }
 
     public LocalDateTime getTimeToStart() {
