@@ -36,7 +36,8 @@ public class MulticastService implements Runnable {
     }
 
     public void sendMessageToGroup(String message) throws IOException, InterruptedException {
-        DatagramPacket packet = new DatagramPacket(message.getBytes(), message.length(), group, port);
+        String encryptedMessage = Main.encryptService.encryptSymmetric(message);
+        DatagramPacket packet = new DatagramPacket(encryptedMessage.getBytes(), encryptedMessage.length(), group, port);
 
         socket.send(packet);
         System.out.println("Mensagem JSON enviada para o grupo multicast!");
@@ -55,7 +56,9 @@ public class MulticastService implements Runnable {
 
                 if (packet.getLength() > 0 && Main.auctionController.isAuctionStatus()) {
                     String message = new String(packet.getData(), 0, packet.getLength());
-                    JsonNode jsonNode = objectMapper.readTree(message);
+                    String decryptedMessage = Main.encryptService.decryptSymmetric(message);
+                    
+                    JsonNode jsonNode = objectMapper.readTree(decryptedMessage);
 
                     if (!jsonNode.get("username").asText().equals("server")) {
                         if (jsonNode.get("operation").asText().equals("RAISE BID")) {

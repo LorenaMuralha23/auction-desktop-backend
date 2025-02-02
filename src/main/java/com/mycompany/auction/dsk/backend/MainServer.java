@@ -44,8 +44,10 @@ public class MainServer implements Runnable {
                 JsonNode jsonNode = objectMapper.readTree(mensagem);
 
                 String response = mapOperation(jsonNode.get("operation").asText(), jsonNode);
-
-                out.println(response);
+                
+                String encryptResponse = Main.encryptService.encryptAssymmetric(response, jsonNode.get("cpf").asText());
+                
+                out.println(encryptResponse);
                 
                 Main.auctionController.verifyIfCanStart();
                 

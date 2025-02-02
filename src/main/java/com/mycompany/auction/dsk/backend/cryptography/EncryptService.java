@@ -103,6 +103,7 @@ public class EncryptService {
     }
 
     public String decryptSymmetric(String encryptedMessage) {
+        System.out.println("Decriptografando simetricamente...");
         try {
             byte[] iv = "1234567890123456".getBytes(StandardCharsets.UTF_8); // Mesmo IV fixo usado na criptografia
             IvParameterSpec ivParameterSpec = new IvParameterSpec(iv);
@@ -113,8 +114,8 @@ public class EncryptService {
             cipher.init(Cipher.DECRYPT_MODE, serverSymmKey, ivParameterSpec);
             byte[] decodedBytes = Base64.getDecoder().decode(encryptedMessage);
             byte[] decryptedBytes = cipher.doFinal(decodedBytes);
-
-            return new String(decryptedBytes, StandardCharsets.UTF_8);
+            
+            return new String(decryptedBytes);
 
         } catch (NoSuchAlgorithmException | NoSuchPaddingException
                 | InvalidKeyException | IllegalBlockSizeException
