@@ -5,7 +5,6 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.mycompany.auction.dsk.backend.Main;
 import com.mycompany.auction.dsk.backend.entities.Product;
 import java.io.IOException;
-import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.Random;
@@ -15,8 +14,6 @@ public class AuctionService {
 
     private static Product[] products = new Product[5];
     private Set<Integer> productsAuctioned = new HashSet<>();
-    private ObjectMapper objectMapper = new ObjectMapper();
-    private ObjectNode jsonNode = objectMapper.createObjectNode();
 
     private LocalDateTime timeToStart;
     private LocalDateTime timeToEnd;
@@ -50,15 +47,11 @@ public class AuctionService {
     }
 
     public void definingInfoToAuction() throws IOException, InterruptedException {
-        // Inicializa o ObjectMapper e o ObjectNode
         ObjectMapper objectMapper = new ObjectMapper();
         ObjectNode jsonNode = objectMapper.createObjectNode();
 
-        // Define o produto para leilão
         Product productToAuction = definingProductToAuction();
 
-        // Define os tempos de início e fim
-        // Adiciona informações ao JSON
         jsonNode.put("username", "server");
         jsonNode.put("operation", "SET INFO");
         jsonNode.put("product", productToAuction.getName());
@@ -69,14 +62,12 @@ public class AuctionService {
         jsonNode.put("timeToEnd", this.timeToEnd.toString());
         
         Main.auctionController.getCurrentAuction().setCurrentProduct(productToAuction);
-        
 
-        System.out.println(jsonNode.toString()); // Corrigido para exibir a string JSON completa
         Main.multicastService.sendMessageToGroup(jsonNode.toString());
         
     }
     
-    public void defineTimeToStart(){
+    public void defineTimeToStartAndEnd(){
         LocalDateTime now = LocalDateTime.now();
         this.timeToStart = now.plusMinutes(1);
         this.timeToEnd = this.timeToStart.plusMinutes(2);

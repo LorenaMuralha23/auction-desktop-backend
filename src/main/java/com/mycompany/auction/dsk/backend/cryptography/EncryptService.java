@@ -1,9 +1,7 @@
 package com.mycompany.auction.dsk.backend.cryptography;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -19,7 +17,6 @@ import java.security.Signature;
 import java.security.SignatureException;
 import java.security.spec.PKCS8EncodedKeySpec;
 import java.security.spec.X509EncodedKeySpec;
-import java.util.Arrays;
 import java.util.Base64;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -51,15 +48,11 @@ public class EncryptService {
 
     public String encryptAssymmetric(String message, String CPF) {
         try {
-            System.out.println("\nMensagem antes de encriptar: " + message);
             PublicKey clientPK = getClientPublicKey(CPF);
 
             Cipher cipher = Cipher.getInstance("RSA");
             cipher.init(Cipher.ENCRYPT_MODE, clientPK);
             byte[] encryptedBytes = cipher.doFinal(message.getBytes());
-
-            System.out.println("Mensagem criptografada:\n");
-            System.out.println(Base64.getEncoder().encodeToString(encryptedBytes));
 
             return Base64.getEncoder().encodeToString(encryptedBytes);
 
@@ -99,12 +92,11 @@ public class EncryptService {
     }
 
     public String decryptSymmetric(String encryptedMessage) {
-        System.out.println("Decriptografando simetricamente...");
         try {
-            byte[] iv = "1234567890123456".getBytes(StandardCharsets.UTF_8); // Mesmo IV fixo usado na criptografia
+            byte[] iv = "1234567890123456".getBytes(StandardCharsets.UTF_8);
             IvParameterSpec ivParameterSpec = new IvParameterSpec(iv);
 
-            SecretKey serverSymmKey = getSymmetricKey(); // Obtém a chave secreta
+            SecretKey serverSymmKey = getSymmetricKey();
 
             Cipher cipher = Cipher.getInstance("AES/CBC/PKCS5Padding");
             cipher.init(Cipher.DECRYPT_MODE, serverSymmKey, ivParameterSpec);
@@ -129,7 +121,7 @@ public class EncryptService {
         if (isClientRegistered(jsonFile)) {
             try {
                 ObjectMapper objectMapper = new ObjectMapper();
-                JsonNode rootNode = objectMapper.readTree(jsonFile); // Lê o arquivo JSON
+                JsonNode rootNode = objectMapper.readTree(jsonFile);
 
                 JsonNode publicKeyNode = rootNode.get("public-key");
                 if (publicKeyNode != null) {
@@ -139,7 +131,7 @@ public class EncryptService {
 
                     KeyFactory keyFactory = KeyFactory.getInstance("RSA");
                     X509EncodedKeySpec keySpec = new X509EncodedKeySpec(publicKeyBytes);
-                    return keyFactory.generatePublic(keySpec); // Retorna a chave pública
+                    return keyFactory.generatePublic(keySpec);
                 } else {
                     System.out.println("Campo 'public-key' não encontrado no arquivo.");
                 }
@@ -152,12 +144,10 @@ public class EncryptService {
     }
 
     public PrivateKey getPrivateKey() {
-
         File jsonFile = new File(this.certificatesDir + "\\server.json");
-        System.out.println("Caminho para as chaves do servidor:\n" + jsonFile.getPath());
         try {
             ObjectMapper objectMapper = new ObjectMapper();
-            JsonNode rootNode = objectMapper.readTree(jsonFile); // Lê o arquivo JSON
+            JsonNode rootNode = objectMapper.readTree(jsonFile);
 
             JsonNode privateKeyNode = rootNode.get("private-key");
             if (privateKeyNode != null) {
@@ -167,12 +157,12 @@ public class EncryptService {
 
                 KeyFactory keyFactory = KeyFactory.getInstance("RSA");
                 PKCS8EncodedKeySpec keySpec = new PKCS8EncodedKeySpec(privateKeyBytes);
-                return keyFactory.generatePrivate(keySpec); // Retorna a chave pública
+                return keyFactory.generatePrivate(keySpec);
             } else {
-                System.out.println("Campo 'public-key' não encontrado no arquivo.");
+                System.out.println("Campo 'private-key' não encontrado no arquivo.");
             }
         } catch (IOException | java.security.NoSuchAlgorithmException | java.security.spec.InvalidKeySpecException e) {
-            System.out.println("Erro ao ler ou converter a chave pública: " + e.getMessage());
+            System.out.println("Erro ao ler ou converter a chave private: " + e.getMessage());
         }
 
         return null;
@@ -216,28 +206,11 @@ public class EncryptService {
             Signature signature = Signature.getInstance("SHA256withRSA");
             signature.initSign(serverPk);
             signature.update(hashBytes);
-            return signature.sign();  // Retorna a assinatura digital
+            return signature.sign(); 
         } catch (NoSuchAlgorithmException | InvalidKeyException | SignatureException e) {
             Logger.getLogger(EncryptService.class.getName()).log(Level.SEVERE, null, e);
         }
         return null;
     }
 
-    public String addSecurityInfoInTheMessage(String message, String messageHash) throws JsonProcessingException {
-        ObjectMapper objectMapper = new ObjectMapper();
-        JsonNode jsonNode = objectMapper.readTree(message);
-        ObjectNode objectNode = (ObjectNode) jsonNode;
-
-        SecretKey symmetricKey = getSymmetricKey();
-
-        byte[] encodedKey = symmetricKey.getEncoded(); // Pega os bytes da chave secreta
-
-        String symmetricKeyString = Base64.getEncoder().encodeToString(encodedKey);
-
-        objectNode.put("symmetric-key", symmetricKeyString);
-        objectNode.put("hash", messageHash);
-        System.out.println("Mensagem completa: " + objectNode.toString());
-
-        return objectNode.toString();
-    }
 }

@@ -5,9 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.mycompany.auction.dsk.backend.Main;
 import com.mycompany.auction.dsk.backend.entities.Auction;
-import com.mycompany.auction.dsk.backend.entities.Product;
 import java.io.IOException;
-import java.math.BigDecimal;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.HashSet;
@@ -15,8 +13,6 @@ import java.util.Set;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 public class AuctionController {
 
@@ -40,7 +36,7 @@ public class AuctionController {
             boolean isAdded = clientsInTheRoom.add(clientToJoin);
 
             if (isAdded) {
-                System.out.println("There are " + this.clientsInTheRoom.size() + " players in the room...");
+                System.out.println("[THERE ARE " + this.clientsInTheRoom.size() + " PLAYERS IN THE ROOM]");
 
                 return isAdded;
             }
@@ -51,7 +47,7 @@ public class AuctionController {
     public void verifyIfCanStart() throws IOException, InterruptedException {
         if (clientsInTheRoom.size() >= 3 && !auctionStatus) {
             auctionStatus = true;
-            this.auctionService.defineTimeToStart();
+            this.auctionService.defineTimeToStartAndEnd();
             startGameAt(this.auctionService.getTimeToStart());
             endGameAt(this.auctionService.getTimeToEnd());
         }
@@ -69,7 +65,7 @@ public class AuctionController {
                 }
             }, delay, TimeUnit.MILLISECONDS);
 
-            System.out.println("Jogo agendado para iniciar em " + timeToStart);
+            System.out.println("THE ROUND WILL START AT: " + timeToStart);
         } else {
             System.out.println("O horário de início já passou!");
         }
@@ -87,7 +83,7 @@ public class AuctionController {
                 }
             }, delay, TimeUnit.MILLISECONDS);
 
-            System.out.println("Jogo agendado para finalizar em " + timeToEnd);
+            System.out.println("THE GAME WILL END AT: " + timeToEnd);
         } else {
             System.out.println("O horário de término já passou!");
         }

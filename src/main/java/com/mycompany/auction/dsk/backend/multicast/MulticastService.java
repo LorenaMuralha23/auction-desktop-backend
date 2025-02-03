@@ -2,7 +2,6 @@ package com.mycompany.auction.dsk.backend.multicast;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.mycompany.auction.dsk.backend.Main;
 import java.io.IOException;
 import java.net.DatagramPacket;
@@ -23,7 +22,7 @@ public class MulticastService implements Runnable {
         group = InetAddress.getByName(multicastGroup);
         socket.joinGroup(group);
 
-        System.out.println("Multicast server started!");
+        System.out.println("[MULTICAST SERVER STARTED]");
     }
 
     public String getMulticastGroup() {
@@ -39,16 +38,14 @@ public class MulticastService implements Runnable {
         DatagramPacket packet = new DatagramPacket(encryptedMessage.getBytes(), encryptedMessage.length(), group, port);
 
         socket.send(packet);
-        System.out.println("Mensagem JSON enviada para o grupo multicast!");
     }
 
     public void listenForMessages() throws InterruptedException {
         try {
             ObjectMapper objectMapper = new ObjectMapper();
-            byte[] buffer = new byte[2048]; // Tamanho do buffer para armazenar pacotes recebidos
+            byte[] buffer = new byte[2048]; 
             DatagramPacket packet = new DatagramPacket(buffer, buffer.length);
 
-            System.out.println("Listening for messages in the multicast group...");
             while (true) {
 
                 socket.receive(packet);
@@ -73,7 +70,7 @@ public class MulticastService implements Runnable {
             e.printStackTrace();
         }
 
-        System.out.println("Jogo finalizado!");
+        System.out.println("[JOGO FINALIZADO]");
     }
 
     @Override

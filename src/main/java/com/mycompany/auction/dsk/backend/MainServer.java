@@ -1,6 +1,5 @@
 package com.mycompany.auction.dsk.backend;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -8,11 +7,9 @@ import java.io.BufferedReader;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.io.PrintWriter;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.nio.charset.StandardCharsets;
-import java.time.LocalDateTime;
 import java.util.Base64;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -33,8 +30,7 @@ public class MainServer implements Runnable {
             }
 
         } catch (IOException ex) {
-            System.out.println("Deu algum erro...");
-            Logger.getLogger(MainServer.class.getName()).log(Level.SEVERE, null, ex);
+            ex.printStackTrace();
         }
     }
 
@@ -96,8 +92,9 @@ public class MainServer implements Runnable {
             ObjectMapper objectMapper = new ObjectMapper();
             JsonNode responseNode = objectMapper.createObjectNode();
 
+            //Pega a chave simétrica e faz as devidas conversões
             SecretKey symmetricKey = Main.encryptService.getSymmetricKey();
-            byte[] encodedKey = symmetricKey.getEncoded(); // Pega os bytes da chave secreta
+            byte[] encodedKey = symmetricKey.getEncoded(); 
             String symmetricKeyString = Base64.getEncoder().encodeToString(encodedKey);
 
             // Adiciona dados à resposta JSON
@@ -106,12 +103,7 @@ public class MainServer implements Runnable {
             ((ObjectNode) responseNode).put("login_status", "SUCCESS");
             ((ObjectNode) responseNode).put("auction_status", Main.auctionController.isAuctionStatus());
             ((ObjectNode) responseNode).put("symmetric_key", symmetricKeyString);
-            //adicionar a chave pública do servidor
 
-//            if (Main.auctionController.isAuctionStatus()) {//estiver iniciado se o jogo já estiver iniciado;
-//                
-//            }
-            // Retorna a string JSON
             return objectMapper.writeValueAsString(responseNode);
 
         } catch (Exception e) {
