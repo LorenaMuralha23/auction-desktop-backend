@@ -83,7 +83,7 @@ public class AuctionController {
                 }
             }, delay, TimeUnit.MILLISECONDS);
 
-            System.out.println("THE GAME WILL END AT: " + timeToEnd);
+            System.out.println("THE ROUND WILL END AT: " + timeToEnd);
         } else {
             System.out.println("O horário de término já passou!");
         }
