@@ -15,6 +15,9 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.PrivateKey;
 import java.security.PublicKey;
+import java.security.Signature;
+import java.security.SignatureException;
+import java.security.spec.PKCS8EncodedKeySpec;
 import java.security.spec.X509EncodedKeySpec;
 import java.util.Arrays;
 import java.util.Base64;
@@ -36,7 +39,7 @@ public class EncryptService {
 
     public EncryptService() {
         try {
-            this.md = MessageDigest.getInstance("SHA-1");
+            this.md = MessageDigest.getInstance("SHA-256");
         } catch (NoSuchAlgorithmException ex) {
             Logger.getLogger(EncryptService.class.getName()).log(Level.SEVERE, null, ex);
         }
@@ -48,26 +51,19 @@ public class EncryptService {
 
     public String encryptAssymmetric(String message, String CPF) {
         try {
-            String messageHash = calculateHash(message);
-            System.out.println("Hash da mensagem: " + messageHash);
-            String hashEncrypted = encryptSymmetric(messageHash);
-            System.out.println("Hash encriptado: " + hashEncrypted);
-
-            String completeMessage = addSecurityInfoInTheMessage(message, hashEncrypted);
-
-            System.out.println("\nMensagem antes de encriptar: " + completeMessage);
+            System.out.println("\nMensagem antes de encriptar: " + message);
             PublicKey clientPK = getClientPublicKey(CPF);
 
             Cipher cipher = Cipher.getInstance("RSA");
             cipher.init(Cipher.ENCRYPT_MODE, clientPK);
-            byte[] encryptedBytes = cipher.doFinal(completeMessage.getBytes());
+            byte[] encryptedBytes = cipher.doFinal(message.getBytes());
 
             System.out.println("Mensagem criptografada:\n");
             System.out.println(Base64.getEncoder().encodeToString(encryptedBytes));
 
             return Base64.getEncoder().encodeToString(encryptedBytes);
 
-        } catch (JsonProcessingException | NoSuchAlgorithmException
+        } catch (NoSuchAlgorithmException
                 | NoSuchPaddingException | InvalidKeyException
                 | IllegalBlockSizeException | BadPaddingException ex) {
             Logger.getLogger(EncryptService.class.getName()).log(Level.SEVERE, null, ex);
@@ -155,6 +151,33 @@ public class EncryptService {
         return null;
     }
 
+    public PrivateKey getPrivateKey() {
+
+        File jsonFile = new File(this.certificatesDir + "\\server.json");
+        System.out.println("Caminho para as chaves do servidor:\n" + jsonFile.getPath());
+        try {
+            ObjectMapper objectMapper = new ObjectMapper();
+            JsonNode rootNode = objectMapper.readTree(jsonFile); // Lê o arquivo JSON
+
+            JsonNode privateKeyNode = rootNode.get("private-key");
+            if (privateKeyNode != null) {
+                String privateKeyBs64 = privateKeyNode.asText();
+
+                byte[] privateKeyBytes = Base64.getDecoder().decode(privateKeyBs64);
+
+                KeyFactory keyFactory = KeyFactory.getInstance("RSA");
+                PKCS8EncodedKeySpec keySpec = new PKCS8EncodedKeySpec(privateKeyBytes);
+                return keyFactory.generatePrivate(keySpec); // Retorna a chave pública
+            } else {
+                System.out.println("Campo 'public-key' não encontrado no arquivo.");
+            }
+        } catch (IOException | java.security.NoSuchAlgorithmException | java.security.spec.InvalidKeySpecException e) {
+            System.out.println("Erro ao ler ou converter a chave pública: " + e.getMessage());
+        }
+
+        return null;
+    }
+
     public SecretKey getSymmetricKey() {
         File jsonFile = new File(certificatesDir + "\\" + "symmetricKey.json");
 
@@ -182,15 +205,22 @@ public class EncryptService {
         return null;
     }
 
-
-    public String calculateHash(String message) {
+    public byte[] calculateHash(String message) {
         byte[] hashBytes = md.digest(message.getBytes(StandardCharsets.UTF_8));
+        return hashBytes;
+    }
 
-        byte[] truncatedHash = Arrays.copyOf(hashBytes, 8);
-
-        String base64Hash = Base64.getEncoder().encodeToString(truncatedHash);
-
-        return base64Hash;
+    public byte[] signHash(byte[] hashBytes) {
+        try {
+            PrivateKey serverPk = getPrivateKey();
+            Signature signature = Signature.getInstance("SHA256withRSA");
+            signature.initSign(serverPk);
+            signature.update(hashBytes);
+            return signature.sign();  // Retorna a assinatura digital
+        } catch (NoSuchAlgorithmException | InvalidKeyException | SignatureException e) {
+            Logger.getLogger(EncryptService.class.getName()).log(Level.SEVERE, null, e);
+        }
+        return null;
     }
 
     public String addSecurityInfoInTheMessage(String message, String messageHash) throws JsonProcessingException {

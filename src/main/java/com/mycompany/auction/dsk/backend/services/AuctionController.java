@@ -49,7 +49,7 @@ public class AuctionController {
     }
 
     public void verifyIfCanStart() throws IOException, InterruptedException {
-        if (clientsInTheRoom.size() >= 2 && !auctionStatus) {
+        if (clientsInTheRoom.size() >= 3 && !auctionStatus) {
             auctionStatus = true;
             this.auctionService.defineTimeToStart();
             startGameAt(this.auctionService.getTimeToStart());
