@@ -24,7 +24,6 @@ public class MulticastService implements Runnable {
         socket.joinGroup(group);
 
         System.out.println("Multicast server started!");
-       
     }
 
     public String getMulticastGroup() {

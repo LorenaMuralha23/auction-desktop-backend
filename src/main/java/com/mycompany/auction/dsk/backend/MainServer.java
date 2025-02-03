@@ -45,6 +45,8 @@ public class MainServer implements Runnable {
 
                 String response = mapOperation(jsonNode.get("operation").asText(), jsonNode);
                 
+                System.out.println("Mensagem enviada: " + response);
+                
                 String encryptResponse = Main.encryptService.encryptAssymmetric(response, jsonNode.get("cpf").asText());
                 
                 out.println(encryptResponse);

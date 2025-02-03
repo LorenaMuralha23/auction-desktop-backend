@@ -13,8 +13,8 @@ import java.security.InvalidKeyException;
 import java.security.KeyFactory;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.security.PrivateKey;
 import java.security.PublicKey;
-import java.security.SecureRandom;
 import java.security.spec.X509EncodedKeySpec;
 import java.util.Arrays;
 import java.util.Base64;
@@ -114,7 +114,7 @@ public class EncryptService {
             cipher.init(Cipher.DECRYPT_MODE, serverSymmKey, ivParameterSpec);
             byte[] decodedBytes = Base64.getDecoder().decode(encryptedMessage);
             byte[] decryptedBytes = cipher.doFinal(decodedBytes);
-            
+
             return new String(decryptedBytes);
 
         } catch (NoSuchAlgorithmException | NoSuchPaddingException
@@ -181,6 +181,7 @@ public class EncryptService {
 
         return null;
     }
+
 
     public String calculateHash(String message) {
         byte[] hashBytes = md.digest(message.getBytes(StandardCharsets.UTF_8));
